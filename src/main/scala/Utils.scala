@@ -1,7 +1,7 @@
 import scala.io.Source
 
 object Utils {
-  def read(filename: String): Iterator[String] = {
-    Source.fromResource(filename).getLines
+  def read(filename: String): List[String] = {
+    Source.fromResource(filename).getLines.toList
   }
 }

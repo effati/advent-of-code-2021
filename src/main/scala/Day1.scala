@@ -1,6 +1,6 @@
 object Day1 {
   def main(args: Array[String]): Unit = {
-    val input = Utils.read("input1").map(_.toInt).toList
+    val input = Utils.read("input1").map(_.toInt)
     println(problem1(input))
     println(problem2(input))
   }
