@@ -10,17 +10,29 @@ object Day3 {
   }
 
   def problem2(input: List[String]): Int = {
-    val mostCommonInColumn = input.transpose
-      .map(bits => bits.groupBy(identity).map(a => (a._1, a._2.size)))
-      .map(column => if (column('1') >= column('0')) '1' else '0')
+    var o2rating = input
+    for (index <- List.range(0, input.head.length) if o2rating.size > 1) {
+      val mostCommonInColumn = mostCommon(o2rating, index)
+      o2rating = o2rating.filter(row => row.charAt(index) == mostCommonInColumn)
+    }
 
-    val leastCommonInColumn =
-      mostCommonInColumn.map(bit => if (bit == '0') '1' else '0')
+    var co2rating = input
+    for (index <- List.range(0, input.head.length) if co2rating.size > 1) {
+      val mostCommonInColumn = if (mostCommon(co2rating, index) == '1') '0' else '1'
+      co2rating = co2rating.filter(row => row.charAt(index) == mostCommonInColumn)
+    }
 
-    val o2rating = rating(input, mostCommonInColumn)
-    val co2rating = rating(input, leastCommonInColumn)
+    Integer.parseInt(o2rating.head, 2) * Integer.parseInt(co2rating.head, 2)
+  }
 
-    Integer.parseInt(o2rating, 2) * Integer.parseInt(co2rating, 2)
+  def mostCommon(input: List[String], position: Int): Char = {
+    input
+      .transpose
+      .apply(position)
+      .groupBy(identity)
+      .map(a => (a._1, a._2.size))
+      .maxBy(_._2)
+      ._1
   }
 
   def rating(input: List[String], bitCriteria: List[Char]): String = {
