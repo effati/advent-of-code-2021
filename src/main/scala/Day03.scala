@@ -20,8 +20,7 @@ object Day03 {
     for (index <- List.range(0, input.head.length) if co2rating.size > 1) {
       val mostCommonInColumn =
         if (mostCommon(co2rating, index) == '1') '0' else '1'
-      co2rating =
-        co2rating.filter(row => row.charAt(index) == mostCommonInColumn)
+      co2rating = co2rating.filter(row => row.charAt(index) == mostCommonInColumn)
     }
 
     Integer.parseInt(o2rating.head, 2) * Integer.parseInt(co2rating.head, 2)
