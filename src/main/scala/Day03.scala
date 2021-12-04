@@ -1,4 +1,4 @@
-object Day3 {
+object Day03 {
   def problem1(input: List[String]): Int = {
     val gammaString = input.transpose
       .map(bits => bits.groupBy(identity).maxBy(_._2.size)._1)
@@ -36,7 +36,7 @@ object Day3 {
   }
 
   def main(args: Array[String]): Unit = {
-    val input = Utils.read("input3")
+    val input = Utils.read("input03")
     println(problem1(input))
     println(problem2(input))
   }

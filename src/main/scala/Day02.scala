@@ -1,4 +1,4 @@
-object Day2 {
+object Day02 {
 
   def problem1(input: List[(String, Int)]): Int = {
     val res = input.foldLeft((0, 0)) { (acc, curr) =>
@@ -27,7 +27,7 @@ object Day2 {
 
   def main(args: Array[String]): Unit = {
     val input = Utils
-      .read("input2")
+      .read("input02")
       .map(line => {
         val splttedLine = line.split(" ")
         (splttedLine(0), splttedLine(1).toInt)

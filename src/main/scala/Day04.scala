@@ -1,6 +1,6 @@
 import scala.collection.mutable.ListBuffer
 
-object Day4 {
+object Day04 {
   def cleanInput(input: List[String]): (List[String], List[List[List[String]]]) = {
     val buffer = ListBuffer(ListBuffer[String]())
     input foreach { e =>
@@ -59,7 +59,7 @@ object Day4 {
   }
 
   def main(args: Array[String]): Unit = {
-    val input = Utils.read("input4")
+    val input = Utils.read("input04")
     println(problem1(input))
     println(problem2(input))
     println(problem1and2combined(input))

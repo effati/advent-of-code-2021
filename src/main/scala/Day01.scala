@@ -1,4 +1,4 @@
-object Day1 {
+object Day01 {
   def problem1(input: List[Int]): Int = {
     input
       .sliding(2)
@@ -15,7 +15,7 @@ object Day1 {
   }
 
   def main(args: Array[String]): Unit = {
-    val input = Utils.read("input1").map(_.toInt)
+    val input = Utils.read("input01").map(_.toInt)
     println(problem1(input))
     println(problem2(input))
   }
