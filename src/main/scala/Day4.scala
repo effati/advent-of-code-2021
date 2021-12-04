@@ -62,5 +62,36 @@ object Day4 {
     val input = Utils.read("input4")
     println(problem1(input))
     println(problem2(input))
+    println(problem1and2combined(input))
+  }
+
+  def problem1and2combined(input: List[String]): (Int, Int) = {
+    val (instructions, boards) = cleanInput(input)
+    val allSums = winningBoardSums(instructions, boards)
+    (allSums.head, allSums.last)
+  }
+
+  def winningBoardSums(instructions: List[String], boards2: List[List[List[String]]]): List[Int] = {
+    val res = ListBuffer[Int]()
+    var boards = boards2
+    var finalInstruction = 0
+    var unmarkedSum = 0
+    for (instruction <- instructions) {
+      boards = boards.flatMap { board =>
+        val markedBoard = board.map {row =>
+          row.map(number => if (number == instruction) "-1" else number)
+        }
+        if (markedBoard.exists(row => row.count(number => number == "-1") == row.size) ||
+          markedBoard.transpose.exists(col => col.count(number => number == "-1") == col.size)) {
+          finalInstruction = instruction.toInt
+          unmarkedSum = markedBoard.flatten.filter(number => number != "-1").map(_.toInt).sum
+          res += finalInstruction * unmarkedSum
+          None
+        } else {
+          Some(markedBoard)
+        }
+      }
+    }
+    res.toList
   }
 }
