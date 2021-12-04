@@ -19,25 +19,15 @@ object Day04 {
     (instructions, boards)
   }
 
-  def bingo(board: List[List[String]]): Boolean =
-    board.exists(row => row.count(_ == "-1") == row.size)
-
-  def markBoard(
-      board: List[List[String]],
-      instruction: String
-  ): List[List[String]] =
-    board.map(row =>
-      row.map(number => if (number == instruction) "-1" else number)
-    )
-
   def winningBoardSums(
       instructions: List[String],
       boards: List[List[List[String]]]
   ): List[Int] = {
+    val bingo: List[List[String]] => Boolean = board => board.exists(row => row.count(_ == "-1") == row.size)
     val res = ListBuffer[Int]()
     instructions.foldLeft(boards)((boardsLeft, instruction) => {
       boardsLeft.flatMap { board =>
-        val markedBoard = markBoard(board, instruction)
+        val markedBoard = board.map(row => row.map(number => if (number == instruction) "-1" else number))
         if (bingo(markedBoard) || bingo(markedBoard.transpose)) {
           val restOfBoard = markedBoard.flatten
             .filter(_ != "-1")
