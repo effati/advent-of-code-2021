@@ -35,17 +35,6 @@ object Day3 {
       ._1
   }
 
-  def rating(input: List[String], bitCriteria: List[Char]): String = {
-    input
-      .map(a => a zip bitCriteria)
-      .map(a =>
-        (a, a.takeWhile { case (char, commonBit) => char == commonBit })
-      )
-      .map { case (a, b) => (a.map(_._1).mkString, b.map(_._1).mkString) }
-      .maxBy(_._2.length)
-      ._1
-  }
-
   def main(args: Array[String]): Unit = {
     val input = Utils.read("input3")
     println(problem1(input))
