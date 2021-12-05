@@ -16,8 +16,8 @@ object Day02 {
     val res = input.foldLeft((0, 0, 0)) { (acc, curr) =>
       curr._1 match {
         case "forward" => (acc._1 + curr._2, acc._2 + (acc._3 * curr._2), acc._3)
-        case "up"   => (acc._1, acc._2, acc._3 - curr._2)
-        case "down" => (acc._1, acc._2, acc._3 + curr._2)
+        case "up"      => (acc._1, acc._2, acc._3 - curr._2)
+        case "down"    => (acc._1, acc._2, acc._3 + curr._2)
       }
     }
 
