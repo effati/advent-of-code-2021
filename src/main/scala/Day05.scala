@@ -3,16 +3,7 @@ object Day05 {
   case class Vertex(x: Int, y: Int)
 
   def problem1(input: List[String]): Int = {
-    input
-      .map(_.split(" -> "))
-      .map(row => {
-        val vertices = row.map(vertex => {
-          val edge = vertex.split(',')
-          Vertex(edge.head.toInt, edge.last.toInt)
-        })
-        (vertices.head, vertices.last)
-      })
-      .flatMap { edge =>
+    val edgeDrawingRule: ((Vertex, Vertex)) => Option[List[Vertex]] = edge =>
         if (edge._1.x == edge._2.x) {
           val range = List(edge._1.y, edge._2.y).sorted
           Some((range.head to range.last).map(y => Vertex(edge._1.x, y)).toList)
@@ -22,16 +13,27 @@ object Day05 {
         } else {
           None
         }
-      }
-      .flatten
-      .groupBy(identity)
-      .map(occurrences => (occurrences._1, occurrences._2.size))
-      .filter(_._2 >= 2)
-      .values
-      .size
+    lineCrossingSolver(input, edgeDrawingRule)
   }
 
   def problem2(input: List[String]): Int = {
+    val edgeDrawingRule: ((Vertex, Vertex)) => Option[List[Vertex]] = edge =>
+      if (edge._1.x == edge._2.x) {
+        Some(getRange(edge._1.y, edge._2.y).map(y => Vertex(edge._1.x, y)).toList)
+      } else if (edge._1.y == edge._2.y) {
+        Some(getRange(edge._1.x, edge._2.x).map(x => Vertex(x, edge._1.y)).toList)
+      } else if ((edge._1.x - edge._1.y).abs == (edge._2.x - edge._2.y).abs ||
+        (edge._1.x - edge._2.x).abs == (edge._1.y - edge._2.y).abs) {
+        Some((getRange(edge._1.x, edge._2.x) zip getRange(edge._1.y, edge._2.y)).map {
+          case (x, y) => Vertex(x, y)
+        }.toList)
+      } else {
+        None
+      }
+    lineCrossingSolver(input, edgeDrawingRule)
+  }
+
+  def lineCrossingSolver(input: List[String], edgeDrawingRule: ((Vertex, Vertex)) => Option[List[Vertex]]): Int = {
     input
       .map(_.split(" -> "))
       .map(row => {
@@ -41,26 +43,11 @@ object Day05 {
         })
         (vertices.head, vertices.last)
       })
-      .flatMap { edge =>
-        if (edge._1.x == edge._2.x) {
-          Some(getRange(edge._1.y, edge._2.y).map(y => Vertex(edge._1.x, y)).toList)
-        } else if (edge._1.y == edge._2.y) {
-          Some(getRange(edge._1.x, edge._2.x).map(x => Vertex(x, edge._1.y)).toList)
-        } else if ((edge._1.x - edge._1.y).abs == (edge._2.x - edge._2.y).abs ||
-          (edge._1.x - edge._2.x).abs == (edge._1.y - edge._2.y).abs) {
-          Some((getRange(edge._1.x, edge._2.x) zip getRange(edge._1.y, edge._2.y)).map {
-            case (x, y) => Vertex(x, y)
-          })
-        } else {
-          None
-        }
-      }
+      .flatMap(edgeDrawingRule)
       .flatten
       .groupBy(identity)
-      .map(occurrences => (occurrences._1, occurrences._2.size))
-      .filter(_._2 >= 2)
-      .values
-      .size
+      .map(_._2.size)
+      .count(_ >= 2)
   }
 
   def getRange(start: Int, end: Int): Range = {
