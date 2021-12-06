@@ -22,9 +22,14 @@ object Day05 {
         Some(getRange(edge._1.x, edge._2.x).map(x => Vertex(x, edge._1.y)).toList)
       } else if ((edge._1.x - edge._1.y).abs == (edge._2.x - edge._2.y).abs ||
                  (edge._1.x - edge._2.x).abs == (edge._1.y - edge._2.y).abs) {
-        Some(getRange(edge._1.x, edge._2.x).zip(getRange(edge._1.y, edge._2.y)).map {
-          case (x, y) => Vertex(x, y)
-        }.toList)
+        Some(
+          getRange(edge._1.x, edge._2.x)
+            .zip(getRange(edge._1.y, edge._2.y))
+            .map {
+              case (x, y) => Vertex(x, y)
+            }
+            .toList
+        )
       } else {
         None
       }
