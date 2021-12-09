@@ -1,5 +1,3 @@
-import scala.collection.mutable
-
 object Day09 {
   type Row = List[Int]
   type HeightMap = List[Row]
@@ -42,20 +40,20 @@ object Day09 {
   }
 
   def basin(input: HeightMap, lowPoint: (Int, Int)): Int = {
-    val (y, x) = lowPoint
-
-    val basin = mutable.ListBuffer[(Int, Int)] { (y, x) }
-    val stack = mutable.Stack[(Int, Int)] { (y, x) }
+    var basin = List[(Int, Int)] { lowPoint }
+    var stack = List[(Int, Int)] { lowPoint }
 
     while (stack.nonEmpty) {
-      val (y, x) = stack.pop()
-      for ((dy, dx) <- Neighbors) {
-        val y2 = y + dy
-        val x2 = x + dx
-        if (input(y2)(x2) <= 8 && !basin.contains((y2, x2))) {
-          basin.append((y2, x2))
-          stack.append((y2, x2))
-        }
+      val (y, x) = stack.head
+      stack = stack.tail
+      basin = basin ++ Neighbors.flatMap {
+        case (dy, dx) =>
+          val y2 = y + dy
+          val x2 = x + dx
+          if (input(y2)(x2) <= 8 && !basin.contains((y2, x2))) {
+            stack = (y2, x2) :: stack
+            Some((y2, x2))
+          } else None
       }
     }
 
