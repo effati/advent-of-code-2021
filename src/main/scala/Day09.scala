@@ -7,25 +7,21 @@ object Day09 {
   val Neighbors = List((-1, 0), (1, 0), (0, -1), (0, 1))
 
   def problem1(input: HeightMap): Int = {
-    input
-      .sliding(3)
-      .flatMap {
-        case row1 :: row2 :: row3 :: _ =>
-          row2.zipWithIndex.sliding(3).flatMap { subrow =>
-            val midIdx = subrow(1)._2
-            val minHoriz = subrow.minBy(_._1)
-            val minVerti = List(row1(midIdx), row2(midIdx), row3(midIdx)).min
-            if (minHoriz._2 == midIdx && minVerti == minHoriz._1)
-              Some(1 + minHoriz._1)
-            else None
-          }
-        case _ => None
-      }
-      .sum
+    lowPoints(input).map {
+      case (row, col) => 1 + input(row)(col)
+    }.sum
   }
 
   def problem2(input: HeightMap): Int = {
-    val lowPoints = input.zipWithIndex
+    lowPoints(input)
+      .map(point => basin(input, point))
+      .sorted(Ordering[Int].reverse)
+      .take(3)
+      .product
+  }
+
+  def lowPoints(input: HeightMap): List[(Int, Int)] = {
+    input.zipWithIndex
       .sliding(3)
       .flatMap {
         case row1 :: row2 :: row3 :: _ =>
@@ -43,12 +39,6 @@ object Day09 {
           }
       }
       .toList
-
-    lowPoints
-      .map(point => basin(input, point))
-      .sorted(Ordering[Int].reverse)
-      .take(3)
-      .product
   }
 
   def basin(input: HeightMap, lowPoint: (Int, Int)): Int = {
