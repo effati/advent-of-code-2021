@@ -5,8 +5,9 @@ object Day11 {
 
   case class State(
     grid: Vector[Vector[GridItem]],
-    flashCount: Long,
-    flashed: Set[Coordinates]
+    flashCount: Int,
+    flashed: Set[Coordinates],
+    toFlash: Set[Coordinates]
   )
 
   val Neighbors: List[Coordinates] = List((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)).map {
@@ -20,66 +21,100 @@ object Day11 {
       .map { case (row, y) => row.map { case (energy, x) => GridItem(energy, Coordinates(y, x)) } }
   }
 
-  def flashes(input: Vector[Vector[GridItem]], steps: Int): Long = {
-    val iter = Iterator.iterate(State(input, 0L, Set())) { state =>
-      val stepState = input.foldLeft(state)((currState, row) => {
-        row.foldLeft(currState)((currState2, gridItem) => {
-          flash(currState2, gridItem.coordinates, checkNeighbors = true)
-        })
-      })
-      State(stepState.grid, stepState.flashCount, Set())
-    }
+  def flashes(input: Vector[Vector[GridItem]], steps: Int): Int = {
+    val iter = stateIterator(input)
+
     (0 until steps).foreach(_ => iter.next())
 
     iter.next().flashCount
   }
 
+  def syncs(input: Vector[Vector[GridItem]]): Int = {
+    var synced = false
+    var step = 0
+    val iter = stateIterator(input)
+
+    while (!synced) {
+      if (!iter.next().grid.flatten.exists(_.energy != 0)) synced = true
+      step += 1
+    }
+
+    step
+  }
+
+  def stateIterator(input: Vector[Vector[GridItem]]): Iterator[State] = {
+    Iterator.iterate(State(input, 0, Set(), Set())) { state =>
+      possibleFlash(State(increment(state.grid), state.flashCount, Set(), Set()))
+    }
+  }
+
+  def toFlashFunc(grid: Vector[Vector[GridItem]]): Set[Coordinates] = {
+    grid.flatMap(row => row.flatMap(gridItem => if (gridItem.energy > 9) Some(gridItem.coordinates) else None)).toSet
+  }
+
+  def possibleFlash(preFlash: State): State = {
+    var toFlash = toFlashFunc(preFlash.grid)
+    var postFlash = preFlash
+    var prevCount = 0L
+    do {
+      prevCount = postFlash.flashCount
+      postFlash = postFlash.grid.foldLeft(postFlash)((currState, row) => {
+        row.foldLeft(currState)((currState2, gridItem) => {
+          if (gridItem.energy <= 9) currState2
+          else flash(currState2, gridItem.coordinates)
+        })
+      })
+    } while (prevCount != postFlash.flashCount)
+    postFlash
+  }
+
   def increment(grid: Vector[Vector[GridItem]]): Vector[Vector[GridItem]] =
-    grid.map(row => row.map(gridItem => GridItem(gridItem.energy + 1, gridItem.coordinates)))
+    grid.map(row => row.map(gridItem => gridItem.copy(energy = gridItem.energy + 1)))
+
+  def incrementNeighbors(grid: Vector[Vector[GridItem]], neighbors: List[Coordinates]): Vector[Vector[GridItem]] = {
+    grid.map(row => row.map(gridItem => if (neighbors.contains(gridItem.coordinates)) gridItem.copy(energy = gridItem.energy + 1) else gridItem))
+  }
 
   def flash(
     state: State,
-    coordinates: Coordinates,
-    checkNeighbors: Boolean
+    coordinates: Coordinates
   ): State = {
     val y = coordinates.y
     val x = coordinates.x
     if (state.flashed.contains(coordinates)) {
       state
     } else {
-      val newEnergy = state.grid(y)(x).energy + 1
-      if (newEnergy < 9) {
-        State(
-          state.grid.updated(y, state.grid(y).updated(x, GridItem(newEnergy, coordinates))),
-          state.flashCount,
-          state.flashed
-        )
-      } else {
-        val newState = State(
-          state.grid.updated(y, state.grid(y).updated(x, GridItem(0, coordinates))),
-          state.flashCount + 1,
-          state.flashed + coordinates
-        )
-        if (checkNeighbors) {
-          val validNeighbors = Neighbors.flatMap { neighbor =>
-            val y2 = y + neighbor.y
-            val x2 = x + neighbor.x
-            if ((0 to 9 contains y2) && (0 to 9 contains x2)) Some(Coordinates(y2, x2))
-            else None
-          }
-          validNeighbors.foldLeft(newState)((currState, neighbor) => {
-            flash(currState, neighbor, checkNeighbors = false)
-          })
-        } else newState
-      }
+      val newGrid = incrementNeighbors(state.grid, validNeighbors(y, x, state.toFlash))
+      State(
+        updateGrid(newGrid, coordinates, 0),
+        state.flashCount + 1,
+        state.flashed + coordinates,
+        state.toFlash ++ toFlashFunc(newGrid)
+      )
     }
   }
 
-  def problem1(input: Vector[Vector[GridItem]]): Long = flashes(input, 100)
+  def updateGrid(grid: Vector[Vector[GridItem]], coordinates: Coordinates, newValue: Int): Vector[Vector[GridItem]] =
+    grid.updated(coordinates.y, grid(coordinates.y).updated(coordinates.x, GridItem(newValue, coordinates)))
+
+  def validNeighbors(y: Int, x: Int, toFlash: Set[Coordinates]): List[Coordinates] = {
+    Neighbors.flatMap { neighbor =>
+      val y2 = y + neighbor.y
+      val x2 = x + neighbor.x
+      if ((0 to 9 contains y2) && (0 to 9 contains x2) && !toFlash.contains(Coordinates(y2, x2))) {
+        Some(Coordinates(y2, x2))
+      }
+      else None
+    }
+  }
+
+  def problem1(input: Vector[Vector[GridItem]]): Int = flashes(input, 100)
+  def problem2(input: Vector[Vector[GridItem]]): Int = syncs(input)
 
   def main(args: Array[String]): Unit = {
-    val input = toCoordinates(Utils.read("sample11").map(_.map(_.toString.toInt).toVector).toVector)
+    val input = toCoordinates(Utils.read("input11").map(_.map(_.toString.toInt).toVector).toVector)
     println(problem1(input))
+    println(problem2(input))
   }
 
 }
