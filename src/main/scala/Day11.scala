@@ -21,39 +21,13 @@ object Day11 {
       .map { case (row, y) => row.map { case (energy, x) => GridItem(energy, Coordinates(y, x)) } }
   }
 
-  def flashes(input: Vector[Vector[GridItem]], steps: Int): Int = {
-    val iter = stateIterator(input)
-
-    (0 until steps).foreach(_ => iter.next())
-
-    iter.next().flashCount
-  }
-
-  def syncs(input: Vector[Vector[GridItem]]): Int = {
-    var synced = false
-    var step = 0
-    val iter = stateIterator(input)
-
-    while (!synced) {
-      if (!iter.next().grid.flatten.exists(_.energy != 0)) synced = true
-      step += 1
-    }
-
-    step
-  }
-
   def stateIterator(input: Vector[Vector[GridItem]]): Iterator[State] = {
     Iterator.iterate(State(input, 0, Set(), Set())) { state =>
       possibleFlash(State(increment(state.grid), state.flashCount, Set(), Set()))
     }
   }
 
-  def toFlashFunc(grid: Vector[Vector[GridItem]]): Set[Coordinates] = {
-    grid.flatMap(row => row.flatMap(gridItem => if (gridItem.energy > 9) Some(gridItem.coordinates) else None)).toSet
-  }
-
   def possibleFlash(preFlash: State): State = {
-    var toFlash = toFlashFunc(preFlash.grid)
     var postFlash = preFlash
     var prevCount = 0L
     do {
@@ -72,44 +46,71 @@ object Day11 {
     grid.map(row => row.map(gridItem => gridItem.copy(energy = gridItem.energy + 1)))
 
   def incrementNeighbors(grid: Vector[Vector[GridItem]], neighbors: List[Coordinates]): Vector[Vector[GridItem]] = {
-    grid.map(row => row.map(gridItem => if (neighbors.contains(gridItem.coordinates)) gridItem.copy(energy = gridItem.energy + 1) else gridItem))
+    grid.map(row =>
+      row.map(gridItem =>
+        if (neighbors.contains(gridItem.coordinates)) gridItem.copy(energy = gridItem.energy + 1) else gridItem
+      )
+    )
   }
 
-  def flash(
-    state: State,
-    coordinates: Coordinates
-  ): State = {
+  def flash(state: State, coordinates: Coordinates): State = {
     val y = coordinates.y
     val x = coordinates.x
     if (state.flashed.contains(coordinates)) {
       state
     } else {
       val newGrid = incrementNeighbors(state.grid, validNeighbors(y, x, state.toFlash))
+      val toBeFlashed = newGrid
+        .flatMap(row => row.flatMap(gridItem => if (gridItem.energy > 9) Some(gridItem.coordinates) else None))
+        .toSet
       State(
         updateGrid(newGrid, coordinates, 0),
         state.flashCount + 1,
         state.flashed + coordinates,
-        state.toFlash ++ toFlashFunc(newGrid)
+        state.toFlash ++ toBeFlashed
       )
     }
   }
 
-  def updateGrid(grid: Vector[Vector[GridItem]], coordinates: Coordinates, newValue: Int): Vector[Vector[GridItem]] =
+  def updateGrid(
+    grid: Vector[Vector[GridItem]],
+    coordinates: Coordinates,
+    newValue: Int
+  ): Vector[Vector[GridItem]] =
     grid.updated(coordinates.y, grid(coordinates.y).updated(coordinates.x, GridItem(newValue, coordinates)))
 
-  def validNeighbors(y: Int, x: Int, toFlash: Set[Coordinates]): List[Coordinates] = {
+  def validNeighbors(
+    y: Int,
+    x: Int,
+    toFlash: Set[Coordinates]
+  ): List[Coordinates] = {
     Neighbors.flatMap { neighbor =>
       val y2 = y + neighbor.y
       val x2 = x + neighbor.x
       if ((0 to 9 contains y2) && (0 to 9 contains x2) && !toFlash.contains(Coordinates(y2, x2))) {
         Some(Coordinates(y2, x2))
-      }
-      else None
+      } else None
     }
   }
 
-  def problem1(input: Vector[Vector[GridItem]]): Int = flashes(input, 100)
-  def problem2(input: Vector[Vector[GridItem]]): Int = syncs(input)
+  def problem1(input: Vector[Vector[GridItem]]): Int = {
+    val iter = stateIterator(input)
+    (0 until 100).foreach(_ => iter.next())
+    iter.next().flashCount
+  }
+
+  def problem2(input: Vector[Vector[GridItem]]): Int = {
+    var synced = false
+    var step = 0
+    val iter = stateIterator(input)
+
+    while (!synced) {
+      if (!iter.next().grid.flatten.exists(_.energy != 0)) synced = true
+      step += 1
+    }
+
+    step
+  }
 
   def main(args: Array[String]): Unit = {
     val input = toCoordinates(Utils.read("input11").map(_.map(_.toString.toInt).toVector).toVector)
