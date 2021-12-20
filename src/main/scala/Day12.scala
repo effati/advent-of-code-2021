@@ -1,28 +1,17 @@
 object Day12 {
   type Graph = Map[String, List[String]]
+  
+  def problem1(input: Graph): Int = count(input, "start", "end")
 
-  def problem1(input: Graph): Int = {
-    val dfs = DFS(input, "start", "end")
-    println(dfs)
-    dfs.size
-  }
-
-  def DFS(graph: Graph, start: String, destination: String): List[List[String]] = {
-    def DFS0(v: String, visited: List[String]): List[String] = {
-      if (v == destination) {
-        val c = v :: visited
-        println(c)
-        c
-      } else if (v.toLowerCase == v && visited.contains(v))
-        List()
+  def count(graph: Graph, start: String, destination: String): Int = {
+    def count0(cave: String, visited: List[String]): Int = {
+      if (cave == destination) 1
+      else if (visited.contains(cave) && cave.head.isLower) 0
       else {
-        val neighbours = graph(v).filterNot(a => visited.contains(a) && a.toLowerCase == a)
-//        val smallCaves2 = if (v.toLowerCase == v) v :: smallCaves else smallCaves
-        neighbours.flatMap(DFS0(_, v :: visited))
+        graph(cave).map(neighbor => count0(neighbor, cave :: visited)).sum
       }
     }
-    graph(start).map(neigh => DFS0(neigh, List())).reverse
-//    DFS0(start, List(), List()).reverse
+    count0(start, List())
   }
 
   def main(args: Array[String]): Unit = {
