@@ -1,5 +1,23 @@
 object Day16 {
-  val sample = "8A004A801A8002F478"
+  val Conversions = Map('0' -> "0000",
+    '1' -> "0001",
+    '2' -> "0010",
+    '3' -> "0011",
+    '4' -> "0100",
+    '5' -> "0101",
+    '6' -> "0110",
+    '7' -> "0111",
+    '8' -> "1000",
+    '9' -> "1001",
+    'A' -> "1010",
+    'B' -> "1011",
+    'C' -> "1100",
+    'D' -> "1101",
+    'E' -> "1110",
+    'F' -> "1111"
+  )
+
+  val sample = "620080001611562C8802118E34"
 
   val bToInt: Seq[Char] => Int = a => Integer.parseInt(a.mkString, 2)
 
@@ -37,16 +55,17 @@ object Day16 {
     while (!lastFound && iter.hasNext) {
       val first = iter.next()
       if (first == '0') lastFound = true
-      literalValue = literalValue :+ iter.take(4).mkString
+      literalValue = literalValue :+ (0 until 4).map(_ => iter.next()).mkString
     }
 //    (bToInt(literalValue.mkString.iterator), iter.dropWhile(_ == '0'))
-    (0, iter.dropWhile(_ == '0'))
+    val padded = 4 - (literalValue.length % 4)
+    (0, iter.drop(padded))
   }
 
   def main(args: Array[String]): Unit = {
 //    val input = Utils.read("input16").head
     val input = sample
-    val bits = BigInt(input, 16).toString(2)
+    val bits = input.map(Conversions).mkString
     println(problem1(bits))
 
   }
