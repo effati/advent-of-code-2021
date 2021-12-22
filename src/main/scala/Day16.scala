@@ -17,55 +17,78 @@ object Day16 {
     'F' -> "1111"
   )
 
-  val sample = "620080001611562C8802118E34"
+  val sample = "C0015000016115A2E0802F182340"
 
   val bToInt: Seq[Char] => Int = a => Integer.parseInt(a.mkString, 2)
+  val bToLong: Seq[Char] => Long = a => java.lang.Long.parseLong(a.mkString, 2)
 
-  def extractSubPackets(iter: Iterator[Char]): (Int, Iterator[Char]) = {
-    val lengthTypeId = iter.next()
-    if (lengthTypeId == '0') {
-      val length = bToInt((0 until 15).map(_ => iter.next()))
-      val test = (0 until length).map(_ => iter.next()).iterator
-      parsePacket(test)
+
+  def extractSubPackets(iter: Seq[Char]): (Int, Seq[Char]) = {
+    val (lengthTypeId, rest) = iter.splitAt(1)
+//    println("length type: " + lengthTypeId.head)
+    if (lengthTypeId.head == '0') {
+      val (lengthStr, rest2) = rest.splitAt(15)
+      val length = bToInt(lengthStr)
+//      println("subpacket length: " + length)
+      val (test, rest3) = rest2.splitAt(length)
+      var subRest = test
+      var version = 0
+      while (subRest.nonEmpty) {
+        val a = parsePacket(subRest)
+        version += a._1
+        subRest = a._2
+      }
+      (version, rest3)
     } else {
-      val numSubPackets = bToInt((0 until 11).map(_ => iter.next()))
-      (0 until numSubPackets).foldLeft((0, iter)) {case ((sum, iter2), _) =>
+      val (numSubPacketsStr, rest2) = rest.splitAt(11)
+      val numSubPackets = bToInt(numSubPacketsStr)
+//      println("num subpackets: " + numSubPackets)
+      (0 until numSubPackets).foldLeft((0, rest2)) {case ((sum, iter2), _) =>
         val (value, newIter) = parsePacket(iter2)
         (sum + value, newIter)
       }
     }
   }
 
-  def parsePacket(iter: Iterator[Char]): (Int, Iterator[Char]) = {
-    val version = bToInt((0 until 3).map(_ => iter.next()))
-    val typeId = bToInt((0 until 3).map(_ => iter.next()))
+  def parsePacket(iter: Seq[Char]): (Int, Seq[Char]) = {
+//    println("----")
+    val (versionStr, rest) = iter.splitAt(3)
+    val version = bToInt(versionStr)
+//    println("version: " + version)
+    val (typeIdStr, rest2) = rest.splitAt(3)
+    val typeId = bToInt(typeIdStr)
+//    println("type: " + typeId)
     val isLiteralValue = if (typeId == 4) true else false
-    val (value, newIter) = if (isLiteralValue) extractLiteralValue(iter) else extractSubPackets(iter)
-    (value + version, newIter)
+    val (value, rest3) = if (isLiteralValue) extractLiteralValue(rest2) else extractSubPackets(rest2)
+    (value + version, rest3)
   }
 
   def problem1(bits: String): Int = {
-    val iter = bits.iterator
-    parsePacket(iter)._1
+    parsePacket(bits)._1
   }
 
-  def extractLiteralValue(iter: Iterator[Char]): (Int, Iterator[Char]) = {
-    var literalValue = List[String]()
+  def extractLiteralValue(iter: Seq[Char]): (Int, Seq[Char]) = {
+    var literalValue = Seq[Char]()
     var lastFound = false
-    while (!lastFound && iter.hasNext) {
-      val first = iter.next()
-      if (first == '0') lastFound = true
-      literalValue = literalValue :+ (0 until 4).map(_ => iter.next()).mkString
+    var finalRest = iter
+    while (!lastFound) {
+      val (first, rest3) = finalRest.splitAt(1)
+      if (first.head == '0') lastFound = true
+      val newV = rest3.splitAt(4)
+      literalValue ++= newV._1
+      finalRest = newV._2
     }
-//    (bToInt(literalValue.mkString.iterator), iter.dropWhile(_ == '0'))
-    val padded = 4 - (literalValue.length % 4)
-    (0, iter.drop(padded))
+//    println("literal value: " + bToLong(literalValue))
+    val mod = literalValue.length % 4
+    val padded = if (mod == 0) 0 else 4 - mod
+    (0, finalRest.drop(padded))
   }
 
   def main(args: Array[String]): Unit = {
-//    val input = Utils.read("input16").head
-    val input = sample
+    val input = Utils.read("input16").head
+//    val input = sample
     val bits = input.map(Conversions).mkString
+//    println(bits)
     println(problem1(bits))
 
   }
