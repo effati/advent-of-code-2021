@@ -12,11 +12,31 @@ object Day17 {
       else if (xRange.contains(coordinate.x) && yRange.contains(coordinate.y)) Some(positions)
       else {
         val newCoord = Coordinate(coordinate.x + trajectory.x, coordinate.y + trajectory.y)
-        val newTraj = Trajectory(if (trajectory.x > 0) trajectory.x - 1 else if (trajectory.x < 0) trajectory.x + 1 else 0, trajectory.y - 1)
+        val newTraj = Trajectory(
+          if (trajectory.x > 0) trajectory.x - 1 else if (trajectory.x < 0) trajectory.x + 1 else 0,
+          trajectory.y - 1
+        )
         go(newCoord, newTraj, positions :+ coordinate)
       }
     }
     go(Start, trajectory, List())
+  }
+
+  def tryThis2(trajectory: Trajectory, xStart: Int, xEnd: Int, yStart: Int, yEnd: Int): Option[Trajectory] = {
+    @tailrec
+    def go(coordinate: Coordinate, trajectory: Trajectory): Option[Trajectory] = {
+      if (coordinate.x > xEnd || coordinate.y < yEnd) None
+      else if (xStart <= coordinate.x && coordinate.x <= xEnd && yStart <= coordinate.y && coordinate.y <= yEnd) Some(trajectory)
+      else {
+        val newCoord = Coordinate(coordinate.x + trajectory.x, coordinate.y + trajectory.y)
+        val newTraj = Trajectory(
+          if (trajectory.x > 0) trajectory.x - 1 else if (trajectory.x < 0) trajectory.x + 1 else 0,
+          trajectory.y - 1
+        )
+        go(newCoord, newTraj)
+      }
+    }
+    go(Start, trajectory)
   }
 
   def problem1(input: String): Int = {
@@ -24,12 +44,16 @@ object Day17 {
     val p(xStart, xEnd, yStart, yEnd) = input
     val (xRange, yRange) = (xStart.toInt to xEnd.toInt, yStart.toInt to yEnd.toInt)
 
-    LazyList.from(0).map { i =>
-      (0 to i)
-        .flatMap(x => (0 to i)
-          .map(y => Trajectory(x, y)))
-      .flatMap(tryThis(_, xRange, yRange))
-    }
+    LazyList
+      .from(0)
+      .map { i =>
+        (0 to i)
+          .flatMap(x =>
+            (0 to i)
+              .map(y => Trajectory(x, y))
+          )
+          .flatMap(tryThis(_, xRange, yRange))
+      }
       .dropWhile(_.isEmpty)
       .take(200)
       .flatten
@@ -39,8 +63,28 @@ object Day17 {
       .y
   }
 
+  def problem2(input: String): Int = {
+    val p = ".*x=(-?\\d+)..(-?\\d+), y=(-?\\d+)..(-?\\d+)".r
+    val p(xStart, xEnd, yStart, yEnd) = input
+    val (xRange, yRange) = (xStart.toInt to xEnd.toInt, yStart.toInt to yEnd.toInt)
+
+    val combinations = List((1, 1), (1, -1), (-1, 1), (-1, -1))
+
+    val i = 120
+    (0 to i)
+      .flatMap(x =>
+        (0 to i)
+          .flatMap(y => combinations.map { case (dx, dy) => Trajectory(x * dx, y * dy) })
+      )
+      .flatMap(tryThis2(_, xRange, yRange))
+      .distinct
+      .length
+  }
+
   def main(args: Array[String]): Unit = {
-    val input = Utils.read("input17").head
-    println(problem1(input))
+//    val input = Utils.read("input17").head
+    val input = "target area: x=20..30, y=-10..-5"
+//    println(problem1(input))
+    println(problem2(input))
   }
 }
