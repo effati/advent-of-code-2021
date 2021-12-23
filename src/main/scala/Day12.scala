@@ -14,11 +14,7 @@ object Day12 {
   }
 
   def problem2(graph: Graph): Int = {
-    def count(
-      cave: String,
-      visited: List[String],
-      visitedSmallCaveTwice: String
-    ): Int = {
+    def count(cave: String, visited: List[String], visitedSmallCaveTwice: String): Int = {
       val isSmallAndVisited = cave.head.isLower && visited.contains(cave)
       if (cave == destination) 1
       else if (isSmallAndVisited && (cave == start || visitedSmallCaveTwice != "")) 0

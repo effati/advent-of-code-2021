@@ -18,11 +18,7 @@ object Day14 {
     vals.max - vals.min
   }
 
-  def step(
-    rules: Rules,
-    charCount: CharCount,
-    pairCount: PairCount
-  ): (CharCount, PairCount) = {
+  def step(rules: Rules, charCount: CharCount, pairCount: PairCount): (CharCount, PairCount) = {
     pairCount.foldLeft((charCount, Map[(Char, Char), Long]())) {
       case ((charCount2, pairCount2), (pair, count)) =>
         val (a, b) = pair

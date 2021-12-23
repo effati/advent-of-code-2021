@@ -31,11 +31,7 @@ object Day15 {
 
   def dijsktra2(graph: Graph, source: Vertex): (Graph, Map[Vertex, Vertex]) = {
     @tailrec
-    def go(
-      active: Set[Vertex],
-      res: Graph,
-      pred: Map[Vertex, Vertex]
-    ): (Graph, Map[Vertex, Vertex]) = {
+    def go(active: Set[Vertex], res: Graph, pred: Map[Vertex, Vertex]): (Graph, Map[Vertex, Vertex]) = {
       if (active.isEmpty) (res, pred)
       else {
         val node = active.minBy(res)
