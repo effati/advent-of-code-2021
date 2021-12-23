@@ -23,68 +23,55 @@ object Day16 {
 
   sealed trait Packet
   case class Literal(version: Int, value: Long) extends Packet
-  case class Operator(version: Int, typeId: Long, packets: List[Packet]) extends Packet
+  case class Operator(
+    version: Int,
+    typeId: Long,
+    packets: List[Packet]
+  ) extends Packet
 
-  def extractSubPackets(iter: Seq[Char]): (List[Packet], Seq[Char]) = {
-    val (lengthTypeId, rest) = iter.splitAt(1)
-    if (lengthTypeId.head == '0') {
-      val (lengthStr, rest2) = rest.splitAt(15)
-      val length = bToInt(lengthStr)
-      val (test, rest3) = rest2.splitAt(length)
+  def parsePacket(iter: Seq[Char]): (Packet, Seq[Char]) = {
+    val version = bToInt(iter.slice(0, 3))
+    val typeId = bToInt(iter.slice(3, 6))
+    val rest = iter.splitAt(6)._2
+    if (typeId == 4) extractLiteralValue(rest, version) else extractSubPackets(rest, version, typeId)
+  }
+
+  def extractSubPackets(
+    input: Seq[Char],
+    version: Int,
+    typeId: Int
+  ): (Operator, Seq[Char]) = {
+    if (input.head == '0') {
+      val length = bToInt(input.slice(1, 16))
+      val (test, rest) = input.drop(16).splitAt(length)
       var subRest = test
       var packets = List[Packet]()
       while (subRest.nonEmpty) {
-        val a = parsePacket(subRest)
-        packets :+= a._1
-        subRest = a._2
+        val (packet, rest4) = parsePacket(subRest)
+        packets :+= packet
+        subRest = rest4
       }
-      (packets, rest3)
+      (Operator(version, typeId, packets), rest)
     } else {
-      val (numSubPacketsStr, rest2) = rest.splitAt(11)
-      val numSubPackets = bToInt(numSubPacketsStr)
-      (0 until numSubPackets).foldLeft((List[Packet](), rest2)) {
-        case ((packets, iter2), _) =>
-          val (packet, newIter) = parsePacket(iter2)
-          (packets :+ packet, newIter)
+      val numSubPacketsStr = input.slice(1, 12)
+      val (packets, rest) = (0 until bToInt(numSubPacketsStr)).foldLeft((List[Packet](), input.drop(12))) {
+        case ((packets, input2), _) =>
+          val (packet, subRest) = parsePacket(input2)
+          (packets :+ packet, subRest)
       }
+      (Operator(version, typeId, packets), rest)
     }
   }
 
-  def parsePacket(iter: Seq[Char]): (Packet, Seq[Char]) = {
-    val (versionStr, rest) = iter.splitAt(3)
-    val version = bToInt(versionStr)
-    val (typeIdStr, rest2) = rest.splitAt(3)
-    val typeId = bToInt(typeIdStr)
-    val isLiteralValue = if (typeId == 4) true else false
-    val (valu2e, rest3) = if (isLiteralValue) {
-      val (value, rest4) = extractLiteralValue(rest2)
-      (Literal(version, value), rest4)
-    } else {
-      val (value, rest4) = extractSubPackets(rest2)
-      (Operator(version, typeId, value), rest4)
-    }
-    (valu2e, rest3)
-  }
-
-  def extractLiteralValue(iter: Seq[Char]): (Long, Seq[Char]) = {
-    var literalValue = Seq[Char]()
-    var lastFound = false
-    var finalRest = iter
-    while (!lastFound) {
-      val (first, rest3) = finalRest.splitAt(1)
-      if (first.head == '0') lastFound = true
-      val newV = rest3.splitAt(4)
-      literalValue ++= newV._1
-      finalRest = newV._2
-    }
-    val mod = literalValue.length % 4
-    val padded = if (mod == 0) 0 else 4 - mod
-    (bToLong(literalValue), finalRest.drop(padded))
+  def extractLiteralValue(input: Seq[Char], version: Int): (Literal, Seq[Char]) = {
+    val (one, zero) = input.grouped(5).span(_.headOption.getOrElse("") == '1')
+    val full = one.toSeq ++ zero.toSeq.take(1)
+    (Literal(version, bToLong(full.flatMap(_.tail))), input.drop(full.flatten.length))
   }
 
   def versionValue(packet: Packet): Long = {
     packet match {
-      case Literal(version, _) => version
+      case Literal(version, _)           => version
       case Operator(version, _, packets) => version + packets.map(versionValue).sum
     }
   }
@@ -92,15 +79,16 @@ object Day16 {
   def expressionValue(packet: Packet): Long = {
     packet match {
       case Literal(_, value) => value
-      case Operator(_, typeId, packets) => (typeId, packets.map(expressionValue)) match {
-        case (0, values) => values.sum
-        case (1, values) => values.product
-        case (2, values) => values.min
-        case (3, values) => values.max
-        case (5, List(first, second)) => if (first > second) 1L else 0L
-        case (6, List(first, second)) => if (first < second) 1L else 0L
-        case (7, List(first, second)) => if (first == second) 1L else 0L
-      }
+      case Operator(_, typeId, packets) =>
+        (typeId, packets.map(expressionValue)) match {
+          case (0, values)              => values.sum
+          case (1, values)              => values.product
+          case (2, values)              => values.min
+          case (3, values)              => values.max
+          case (5, List(first, second)) => if (first > second) 1L else 0L
+          case (6, List(first, second)) => if (first < second) 1L else 0L
+          case (7, List(first, second)) => if (first == second) 1L else 0L
+        }
     }
   }
 
