@@ -1,5 +1,6 @@
 object Day16 {
-  val Conversions = Map('0' -> "0000",
+  val Conversions = Map(
+    '0' -> "0000",
     '1' -> "0001",
     '2' -> "0010",
     '3' -> "0011",
@@ -22,7 +23,6 @@ object Day16 {
   val bToInt: Seq[Char] => Int = a => Integer.parseInt(a.mkString, 2)
   val bToLong: Seq[Char] => Long = a => java.lang.Long.parseLong(a.mkString, 2)
 
-
   def extractSubPackets(iter: Seq[Char]): (Int, Seq[Char]) = {
     val (lengthTypeId, rest) = iter.splitAt(1)
 //    println("length type: " + lengthTypeId.head)
@@ -43,9 +43,10 @@ object Day16 {
       val (numSubPacketsStr, rest2) = rest.splitAt(11)
       val numSubPackets = bToInt(numSubPacketsStr)
 //      println("num subpackets: " + numSubPackets)
-      (0 until numSubPackets).foldLeft((0, rest2)) {case ((sum, iter2), _) =>
-        val (value, newIter) = parsePacket(iter2)
-        (sum + value, newIter)
+      (0 until numSubPackets).foldLeft((0, rest2)) {
+        case ((sum, iter2), _) =>
+          val (value, newIter) = parsePacket(iter2)
+          (sum + value, newIter)
       }
     }
   }
@@ -88,7 +89,6 @@ object Day16 {
     val input = Utils.read("input16").head
 //    val input = sample
     val bits = input.map(Conversions).mkString
-//    println(bits)
     println(problem1(bits))
 
   }
