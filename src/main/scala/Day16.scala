@@ -1,4 +1,8 @@
 object Day16 {
+  sealed trait Packet
+  case class Literal(version: Int, value: Long) extends Packet
+  case class Operator(version: Int, typeId: Long, packets: List[Packet]) extends Packet
+
   val Conversions = Map(
     '0' -> "0000",
     '1' -> "0001",
@@ -18,16 +22,12 @@ object Day16 {
     'F' -> "1111"
   )
 
-  val bToInt: Seq[Char] => Int = a => Integer.parseInt(a.mkString, 2)
-  val bToLong: Seq[Char] => Long = a => java.lang.Long.parseLong(a.mkString, 2)
-
-  sealed trait Packet
-  case class Literal(version: Int, value: Long) extends Packet
-  case class Operator(version: Int, typeId: Long, packets: List[Packet]) extends Packet
+  val binInt: Seq[Char] => Int = b => Integer.parseInt(b.mkString, 2)
+  val binLong: Seq[Char] => Long = b => java.lang.Long.parseLong(b.mkString, 2)
 
   def parsePacket(input: Seq[Char]): (Packet, Seq[Char]) = {
-    val version = bToInt(input.slice(0, 3))
-    val typeId = bToInt(input.slice(3, 6))
+    val version = binInt(input.slice(0, 3))
+    val typeId = binInt(input.slice(3, 6))
     val rest = input.splitAt(6)._2
     if (typeId == 4) extractLiteralValue(rest, version)
     else if (rest.head == '0') extractLengthBits(rest.tail, version, typeId)
@@ -36,28 +36,25 @@ object Day16 {
 
   def extractLiteralValue(input: Seq[Char], version: Int): (Literal, Seq[Char]) = {
     val (one, zero) = input.grouped(5).span(_.headOption.getOrElse("") == '1')
-    val full = one.toSeq ++ zero.toSeq.take(1)
-    (Literal(version, bToLong(full.flatMap(_.tail))), input.drop(full.flatten.length))
+    val full = (one ++ zero.take(1)).toSeq
+    (Literal(version, binLong(full.flatMap(_.tail))), input.drop(full.flatten.length))
   }
 
   def extractLengthBits(input: Seq[Char], version: Int, typeId: Int): (Packet, Seq[Char]) = {
-    val length = bToInt(input.slice(0, 15))
-    val (test, rest) = input.drop(15).splitAt(length)
-    var subRest = test
+    var (bits, rest) = input.drop(15).splitAt(binInt(input.slice(0, 15)))
     var packets = List[Packet]()
-    while (subRest.nonEmpty) {
-      val (packet, rest4) = parsePacket(subRest)
+    while (bits.nonEmpty) {
+      val (packet, rest4) = parsePacket(bits)
       packets :+= packet
-      subRest = rest4
+      bits = rest4
     }
     (Operator(version, typeId, packets), rest)
   }
 
   def extractNumPackets(input: Seq[Char], version: Int, typeId: Int): (Operator, Seq[Char]) = {
-    val numSubPacketsStr = input.slice(0, 11)
-    val (packets, rest) = (0 until bToInt(numSubPacketsStr)).foldLeft((List[Packet](), input.drop(11))) {
-      case ((packets, input2), _) =>
-        val (packet, subRest) = parsePacket(input2)
+    val (packets, rest) = (0 until binInt(input.slice(0, 11))).foldLeft((List[Packet](), input.drop(11))) {
+      case ((packets, rest), _) =>
+        val (packet, subRest) = parsePacket(rest)
         (packets :+ packet, subRest)
     }
     (Operator(version, typeId, packets), rest)
