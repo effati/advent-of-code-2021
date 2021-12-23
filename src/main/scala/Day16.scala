@@ -18,57 +18,55 @@ object Day16 {
     'F' -> "1111"
   )
 
-  val sample = "C0015000016115A2E0802F182340"
-
   val bToInt: Seq[Char] => Int = a => Integer.parseInt(a.mkString, 2)
   val bToLong: Seq[Char] => Long = a => java.lang.Long.parseLong(a.mkString, 2)
 
-  def extractSubPackets(iter: Seq[Char]): (Int, Seq[Char]) = {
+  sealed trait Packet
+  case class Literal(version: Int, value: Long) extends Packet
+  case class Operator(version: Int, typeId: Long, packets: List[Packet]) extends Packet
+
+  def extractSubPackets(iter: Seq[Char]): (List[Packet], Seq[Char]) = {
     val (lengthTypeId, rest) = iter.splitAt(1)
-//    println("length type: " + lengthTypeId.head)
     if (lengthTypeId.head == '0') {
       val (lengthStr, rest2) = rest.splitAt(15)
       val length = bToInt(lengthStr)
-//      println("subpacket length: " + length)
       val (test, rest3) = rest2.splitAt(length)
       var subRest = test
-      var version = 0
+      var packets = List[Packet]()
       while (subRest.nonEmpty) {
         val a = parsePacket(subRest)
-        version += a._1
+        packets :+= a._1
         subRest = a._2
       }
-      (version, rest3)
+      (packets, rest3)
     } else {
       val (numSubPacketsStr, rest2) = rest.splitAt(11)
       val numSubPackets = bToInt(numSubPacketsStr)
-//      println("num subpackets: " + numSubPackets)
-      (0 until numSubPackets).foldLeft((0, rest2)) {
-        case ((sum, iter2), _) =>
-          val (value, newIter) = parsePacket(iter2)
-          (sum + value, newIter)
+      (0 until numSubPackets).foldLeft((List[Packet](), rest2)) {
+        case ((packets, iter2), _) =>
+          val (packet, newIter) = parsePacket(iter2)
+          (packets :+ packet, newIter)
       }
     }
   }
 
-  def parsePacket(iter: Seq[Char]): (Int, Seq[Char]) = {
-//    println("----")
+  def parsePacket(iter: Seq[Char]): (Packet, Seq[Char]) = {
     val (versionStr, rest) = iter.splitAt(3)
     val version = bToInt(versionStr)
-//    println("version: " + version)
     val (typeIdStr, rest2) = rest.splitAt(3)
     val typeId = bToInt(typeIdStr)
-//    println("type: " + typeId)
     val isLiteralValue = if (typeId == 4) true else false
-    val (value, rest3) = if (isLiteralValue) extractLiteralValue(rest2) else extractSubPackets(rest2)
-    (value + version, rest3)
+    val (valu2e, rest3) = if (isLiteralValue) {
+      val (value, rest4) = extractLiteralValue(rest2)
+      (Literal(version, value), rest4)
+    } else {
+      val (value, rest4) = extractSubPackets(rest2)
+      (Operator(version, typeId, value), rest4)
+    }
+    (valu2e, rest3)
   }
 
-  def problem1(bits: String): Int = {
-    parsePacket(bits)._1
-  }
-
-  def extractLiteralValue(iter: Seq[Char]): (Int, Seq[Char]) = {
+  def extractLiteralValue(iter: Seq[Char]): (Long, Seq[Char]) = {
     var literalValue = Seq[Char]()
     var lastFound = false
     var finalRest = iter
@@ -79,18 +77,40 @@ object Day16 {
       literalValue ++= newV._1
       finalRest = newV._2
     }
-//    println("literal value: " + bToLong(literalValue))
     val mod = literalValue.length % 4
     val padded = if (mod == 0) 0 else 4 - mod
-    (0, finalRest.drop(padded))
+    (bToLong(literalValue), finalRest.drop(padded))
   }
+
+  def versionValue(packet: Packet): Long = {
+    packet match {
+      case Literal(version, _) => version
+      case Operator(version, _, packets) => version + packets.map(versionValue).sum
+    }
+  }
+
+  def expressionValue(packet: Packet): Long = {
+    packet match {
+      case Literal(_, value) => value
+      case Operator(_, typeId, packets) => (typeId, packets.map(expressionValue)) match {
+        case (0, values) => values.sum
+        case (1, values) => values.product
+        case (2, values) => values.min
+        case (3, values) => values.max
+        case (5, List(first, second)) => if (first > second) 1L else 0L
+        case (6, List(first, second)) => if (first < second) 1L else 0L
+        case (7, List(first, second)) => if (first == second) 1L else 0L
+      }
+    }
+  }
+
+  def problem1(bits: String): Long = versionValue(parsePacket(bits)._1)
+  def problem2(bits: String): Long = expressionValue(parsePacket(bits)._1)
 
   def main(args: Array[String]): Unit = {
     val input = Utils.read("input16").head
-//    val input = sample
     val bits = input.map(Conversions).mkString
     println(problem1(bits))
-
+    println(problem2(bits))
   }
-
 }
