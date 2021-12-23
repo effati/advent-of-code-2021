@@ -22,11 +22,17 @@ object Day17 {
     go(Start, trajectory, List())
   }
 
-  def tryThis2(trajectory: Trajectory, xStart: Int, xEnd: Int, yStart: Int, yEnd: Int): Option[Trajectory] = {
+  def tryThis2(
+    trajectory: Trajectory,
+    xStart: Int,
+    xEnd: Int,
+    yStart: Int,
+    yEnd: Int
+  ): Option[Trajectory] = {
     @tailrec
     def go(coordinate: Coordinate, trajectory: Trajectory): Option[Trajectory] = {
-      if (coordinate.x > xEnd || coordinate.y < yEnd) None
-      else if (xStart <= coordinate.x && coordinate.x <= xEnd && yStart <= coordinate.y && coordinate.y <= yEnd) Some(trajectory)
+      if (coordinate.x > xEnd || coordinate.y < yStart) None
+      else if (xStart <= coordinate.x && coordinate.y <= yEnd) Some(trajectory)
       else {
         val newCoord = Coordinate(coordinate.x + trajectory.x, coordinate.y + trajectory.y)
         val newTraj = Trajectory(
@@ -65,26 +71,27 @@ object Day17 {
 
   def problem2(input: String): Int = {
     val p = ".*x=(-?\\d+)..(-?\\d+), y=(-?\\d+)..(-?\\d+)".r
-    val p(xStart, xEnd, yStart, yEnd) = input
-    val (xRange, yRange) = (xStart.toInt to xEnd.toInt, yStart.toInt to yEnd.toInt)
+    val p(x1, x2, y1, y2) = input
+    val (xStart, xEnd, yStart, yEnd) = (x1.toInt, x2.toInt, y1.toInt, y2.toInt)
 
     val combinations = List((1, 1), (1, -1), (-1, 1), (-1, -1))
-
-    val i = 120
+    val i = 1000
     (0 to i)
       .flatMap(x =>
         (0 to i)
           .flatMap(y => combinations.map { case (dx, dy) => Trajectory(x * dx, y * dy) })
       )
-      .flatMap(tryThis2(_, xRange, yRange))
+      .flatMap { traj =>
+        val a = tryThis2(traj, xStart, xEnd, yStart, yEnd)
+        if (a.nonEmpty) Some(traj) else None
+      }
       .distinct
       .length
   }
 
   def main(args: Array[String]): Unit = {
-//    val input = Utils.read("input17").head
-    val input = "target area: x=20..30, y=-10..-5"
-//    println(problem1(input))
+    val input = Utils.read("input17").head
+    println(problem1(input))
     println(problem2(input))
   }
 }
