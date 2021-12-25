@@ -2,36 +2,38 @@ import scala.annotation.tailrec
 
 object Day18 {
   sealed trait Node {
-    def explode(depth: Int): ExplodeResult
-    def split: Node
     def magnitude: Int
     def addLeft(value: Int): Node
     def addRight(value: Int): Node
+    def explode(depth: Int): ExplodeResult
+    def split: Node
   }
+
   case class Pair(left: Node, right: Node) extends Node {
-    override def explode(depth: Int): ExplodeResult = {
+    def magnitude: Int = 3 * left.magnitude + 2 * right.magnitude
+    def addLeft(value: Int): Node = Pair(left.addLeft(value), right)
+    def addRight(value: Int): Node = Pair(left, right.addRight(value))
+    def explode(depth: Int): ExplodeResult = {
       (left, right) match {
         case (Number(l), Number(r)) if depth <= 0 => ExplodeResult(Number(0), l, r)
         case _ =>
           val leftExp = left.explode(depth - 1)
-          val nr = if (leftExp.addRight != 0) right.addLeft(leftExp.addRight) else right
+          val nr = if (leftExp.addRight > 0) right.addLeft(leftExp.addRight) else right
           val rightExp = nr.explode(depth - 1)
-          val nl = if (rightExp.addLeft != 0) leftExp.node.addRight(rightExp.addLeft) else leftExp.node
+          val nl = if (rightExp.addLeft > 0) leftExp.node.addRight(rightExp.addLeft) else leftExp.node
           ExplodeResult(Pair(nl, rightExp.node), leftExp.addLeft, rightExp.addRight)
       }
     }
-
-    override def split: Node = {
+    def split: Node = {
       val nl = left.split
       if (nl != left) Pair(nl, right) else Pair(left, right.split)
     }
-    override def magnitude: Int = 3 * left.magnitude + 2 * right.magnitude
-    override def addLeft(value: Int): Node = Pair(left.addLeft(value), right)
-    override def addRight(value: Int): Node = Pair(left, right.addRight(value))
   }
-  case class ExplodeResult(node: Node, addLeft: Int, addRight: Int)
 
   case class Number(value: Int) extends Node {
+    def magnitude: Int = value
+    def addLeft(value2: Int): Node = Number(value + value2)
+    def addRight(value2: Int): Node = Number(value + value2)
     def explode(depth: Int): ExplodeResult = ExplodeResult(this, 0, 0)
     def split: Node = {
       if (value >= 10) {
@@ -40,10 +42,9 @@ object Day18 {
       }
       else Number(value)
     }
-    def magnitude: Int = value
-    def addLeft(value2: Int): Node = Number(value + value2)
-    def addRight(value2: Int): Node = Number(value + value2)
   }
+
+  case class ExplodeResult(node: Node, addLeft: Int, addRight: Int)
 
   def problem1(input: List[String]): Int = {
     input
