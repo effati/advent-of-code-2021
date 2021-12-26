@@ -87,7 +87,7 @@ object Day18 {
 
   def main(args: Array[String]): Unit = {
     val input = Utils.read("input18")
-//    println(problem1(input))
+    println(problem1(input))
     println(problem2(input))
   }
 }
