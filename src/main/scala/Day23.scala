@@ -19,7 +19,7 @@ object Day23 {
     val (correct1, wrong1) = rows._1.partition(c => c.coordinate.x == rooms(c.char))
     val (correct2, wrong2) = rows._2.partition(c => c.coordinate.x == rooms(c.char))
     val correctable = wrong1.filterNot(c => correct1.map(_.char).contains(c.char))
-    
+
   }
 
   def main(args: Array[String]): Unit = {
