@@ -1,59 +1,43 @@
 object Day25 {
-  case class Coordinate(x: Int, y: Int)
+  def problem1(input: Map[(Int, Int), Char]): Int = {
+    val maxX = input.map(_._1._1).max
+    val funcX = (x: Int, y: Int) => (if (x + 1 > maxX) 0 else x + 1, y)
+    val maxY = input.map(_._1._2).max
+    val funcY = (x: Int, y: Int) => (x, if (y + 1 > maxY) 0 else y + 1)
 
-  def problem1(input: Map[Coordinate, Char]): Int = {
-    val maxX = input.map(_._1.x).max
-    val maxY = input.map(_._1.y).max
-
-//    val funcX: Coordinate => Coordinate = coordinate => Coordinate(if (coordinate.x + 1 > maxX) 0 else coordinate.x + 1, coordinate.y)
-//    val funcY: Coordinate => Coordinate = coordinate => Coordinate(coordinate.x, if (coordinate.y + 1 > maxY) 0 else coordinate.y + 1)
+    val functions = Seq(('>', funcX), ('v', funcY))
 
     Iterator
       .iterate(input) { state =>
-//        Seq(('>', funcX), ('v', funcY)).foldLeft(state) { case (state2, (targetChar, func)) =>
-//          state2.flatMap { case (coordinate, char) =>
-//            if (char != targetChar) None
-//            else {
-//              val newCoord = func(coordinate)
-//              if (state2(newCoord) == '.') Seq((newCoord, char), (coordinate, '.')) else None
-//            }
-//          }
-//        }
-
-        val moveEast = state
-          .flatMap { case (coordinate, char) =>
-            if (char != '>') None
-            else {
-              val newCoord = Coordinate(if (coordinate.x + 1 > maxX) 0 else coordinate.x + 1, coordinate.y)
-              if (state(newCoord) == '.') Seq((newCoord, char), (coordinate, '.')) else None
+        functions.foldLeft(state) {
+          case (state2, (targetChar, func)) =>
+            state2 ++ state2.flatMap {
+              case ((x, y), char) =>
+                if (char != targetChar) None
+                else {
+                  val newCoord = func(x, y)
+                  if (state2(newCoord) == '.') Seq((newCoord, char), ((x, y), '.')) else None
+                }
             }
         }
-
-        val state2 = state ++ moveEast
-
-        val moveSouth = state2
-          .flatMap { case (coordinate, char) =>
-            if (char != 'v') None
-            else {
-              val newCoord = Coordinate(coordinate.x, if (coordinate.y + 1 > maxY) 0 else coordinate.y + 1)
-              if (state2(newCoord) == '.') Seq((newCoord, char), (coordinate, '.')) else None
-            }
-          }
-
-        state2 ++ moveSouth
       }
       .zipWithIndex
       .sliding(2)
       .dropWhile(seq => seq.head._1 != seq.last._1)
       .next()
-      .head
+      .last
       ._2
   }
 
   def main(args: Array[String]): Unit = {
-    val input = Utils.read("input25").zipWithIndex.flatMap { case (row, y) =>
-      row.zipWithIndex.map { case (cucumber, x) => Coordinate(x, y) -> cucumber}
-    }.toMap
+    val input = Utils
+      .read("input25")
+      .zipWithIndex
+      .flatMap {
+        case (row, y) =>
+          row.zipWithIndex.map { case (cucumber, x) => (x, y) -> cucumber }
+      }
+      .toMap
     println(problem1(input))
   }
 }
