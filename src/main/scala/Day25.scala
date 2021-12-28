@@ -1,8 +1,9 @@
 object Day25 {
   def problem1(input: Map[(Int, Int), Char]): Int = {
-    val maxX = input.map(_._1._1).max
+    val maxX = input.map { case ((x, _), _) => x }.max
+    val maxY = input.map { case ((_, y), _) => y }.max
+    
     val funcX = (x: Int, y: Int) => (if (x + 1 > maxX) 0 else x + 1, y)
-    val maxY = input.map(_._1._2).max
     val funcY = (x: Int, y: Int) => (x, if (y + 1 > maxY) 0 else y + 1)
 
     val functions = Seq(('>', funcX), ('v', funcY))
@@ -23,7 +24,7 @@ object Day25 {
       }
       .zipWithIndex
       .sliding(2)
-      .dropWhile(seq => seq.head._1 != seq.last._1)
+      .dropWhile { case Seq((prev, _), (curr, _)) => prev != curr }
       .next()
       .last
       ._2
