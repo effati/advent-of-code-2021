@@ -46,11 +46,11 @@ object Day23 {
         if (stack.isEmpty) res
         else {
           val currentState = stack.minBy(a => res(a._1))
-          val futureStates2 = currentState._1.map { case (c, i) =>
-            val neighbors = possibleCoordinates(hallways, currentState._1, correct, allPossible, c)
-            val replacement = currentState._1.removed(c)
-            neighbors.map(neighbor => (replacement ++ Map(neighbor -> i)) -> cost(c, neighbor, i))
-          }
+//          val futureStates2 = currentState._1.map { case (c, i) =>
+//            val neighbors = possibleCoordinates(hallways, currentState._1, correct, allPossible, c)
+//            val replacement = currentState._1.removed(c)
+//            neighbors.map(neighbor => (replacement ++ Map(neighbor -> i)) -> cost(c, neighbor, i))
+//          }
 //            .filter { case (_, b) => b.nonEmpty}
 
           val futureStates = currentState._1.flatMap { case (c, i) =>
@@ -62,12 +62,12 @@ object Day23 {
           val alt = futureStates
             .withFilter { case (futureState, cost) => currentState._2 + cost < res.getOrElse(futureState, Int.MaxValue) }
             .map { case (futureState, cost) => futureState -> (currentState._2 + cost) }
-          val stack1 = stack - currentState ++ alt
+          val stack1 = stack - currentState ++ alt.toSet
 //          val preds = alt.keys.map(key => key -> node).toMap
           go(stack1, res ++ alt)
         }
       }
-      go(Set(start), Map(start -> 0))
+      go(Set((start, 0)), Map(start -> 0))
     }
 
     val dij = dijsktra(state)
